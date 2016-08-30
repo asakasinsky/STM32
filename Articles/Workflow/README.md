@@ -178,7 +178,7 @@ Programming an STM32F103XXX with a generic "ST Link V2" programmer from Linux ·
 https://github.com/rogerclarkmelbourne/Arduino_STM32/wiki/Programming-an-STM32F103XXX-with-a-generic-%22ST-Link-V2%22-programmer-from-Linux
 
 
-
+```bash
 > init
 > reset init
 target state: halted
@@ -214,6 +214,7 @@ downloaded 20480 bytes in 0.494348s (40.457 KiB/s)
 > shutdown
 shutdown command invoked
 > Connection closed by foreign host.
+```
 
 -------------------------------
 
