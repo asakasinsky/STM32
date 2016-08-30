@@ -161,3 +161,130 @@ Telnet port: 4444
 Config Options: -f stm32f103c8t6.cfg
 
 _Note: [stm32f103c8t6.cfg](https://github.com/asakasinsky/STM32/blob/master/STM32F103C8T6_minimal_dev_board/Files/stm32f103c8t6.cfg) must be placed in a «workspace» is running Eclipse, otherwise specify the full path to the file_
+
+
+
+
+
+
+
+
+
+-------------------------------
+
+__Проверить по картам памяти и инструкции к OpenOCD__
+
+Programming an STM32F103XXX with a generic "ST Link V2" programmer from Linux · rogerclarkmelbourne/Arduino_STM32 Wiki
+https://github.com/rogerclarkmelbourne/Arduino_STM32/wiki/Programming-an-STM32F103XXX-with-a-generic-%22ST-Link-V2%22-programmer-from-Linux
+
+
+
+> init
+> reset init
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x01000000 pc: 0xfffffffe msp: 0xfffffffc
+> poll off
+> adapter_khz 8000
+8000 kHz
+> dump_image dump.bin 0x08000000 131072
+dumped 131072 bytes in 3.291646s (38.886 KiB/s)
+> verify_image dump.bin 0x08000000
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x61000000 pc: 0x2000003a msp: 0xfffffffc
+verified 131072 bytes in 2.087557s (61.316 KiB/s)
+> stm32f1x mass_erase 0
+device id = 0x20036410
+flash size = 128kbytes
+stm32x mass erase complete
+> flash write_image dump.bin 0x08000000
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x61000000 pc: 0x2000003e msp: 0xfffffffc
+wrote 131072 bytes from file dump.bin in 4.109462s (31.148 KiB/s)
+> verify_image dump.bin 0x08000000
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x61000000 pc: 0x2000003a msp: 0xfffffffc
+verified 131072 bytes in 2.094413s (61.115 KiB/s)
+> load_image dump.bin 0x20000000 bin 0x20000000 20480
+20480 bytes written at address 0x20000000
+downloaded 20480 bytes in 0.494348s (40.457 KiB/s)
+> shutdown
+shutdown command invoked
+> Connection closed by foreign host.
+
+-------------------------------
+
+
+
+## Семихостинг
+
+__Не проверял__
+
+Выводит printf() в консоль OpenOCD с помощью JTAG. Для этого в опции линкера в Make-файле надо добавить:
+
+-specs=nosys.specs -specs=nano.specs -specs=rdimon.specs -lc -lrdimon
+Для корректного вывода float добавить ключ
+
+LDFLAGS += -u _printf_float
+В Initialization Commands на вкладке Startup в параметрах конфигурации отладки OpenOCD в Eclipse добавить:
+
+monitor arm semihosting enable
+
+
+
+ -------------------
+
+ -----
+
+
+Отладка с помощью EmbSysRegView
+
+Можно смотреть все регистры на паузе, заливка на плату автоматически, вывод в консоль жклипса
+
+
+
+
+ -------------------
+
+
+
+Выбираем HAL
+
+## STM32CubeMX
+
+
+Не зависимо от библиотеки в результате компиляции вы должны получить бинарные файлы .hex или .bin для прошивки контроллера и .elf файл для отладки.
+
+
+Генератор проектов STM32CubeMX работает как отдельное приложение под Java. Чтобы его установить под Linux или MacOS надо переименовать установочный exe-файл в jar и выполнить:
+
+    java -jar SetupSTM32CubeMX-4.11.0.jar
+
+Также есть версия STM32CubeMX в виде плагина к Eclipse (http://www.st.com/web/en/catalog/tools/PF257931). Для ее установки нужно в Eclipse выбрать:
+
+    Help > Install New Software...
+
+Нажать кнопки Add..., затем Archive... и выбрать zip-архив с плагином.
+
+STM32CubeMX умеет генерировать проекты для нескольких IDE: EWARM, MDK-ARM 4 и 5, TrueStudio и SW4STM32. Eclipse пока напрямую не поддерживается.
+
+Чтобы скомпилировать проект и работать с ним в Eclipse через обычные Make-файлы необходимо сгенерировать проект для IDE SW4STM32 с помощью STM32CubeMX, а затем сгенерировать make-файл с помощью скрипта https://github.com/baoshi/CubeMX2Makefile. Для этого понадобится Python 2.7 и команда:
+
+    CubeMX2Makefile.py путь_к_проекту_SW4STM32
+
+Потом открыть сгенерированный файл и удалить кавычки в строчке с CDEFS. Например,
+
+    C_DEFS = -D__weak="__attribute__\(\(weak\)\)" -D__packed="__attribute__\(\(__packed__\)\)" -DUSE_HAL_DRIVER -DSTM32F303xC
+
+заменить на
+
+     C_DEFS = -D__weak=__attribute__\(\(weak\)\) -D__packed=__attribute__\(\(__packed__\)\) -DUSE_HAL_DRIVER -DSTM32F303xC
+
+После этого скомпилировать проект можно командой make в каталоге проекта. Для Windows предварительно нужно будет установить GNU Make (http://gnuwin32.sourceforge.net/packages/make.htm) и GNU Core Utilites (http://gnuwin32.sourceforge.net/packages/coreutils.htm), под Ubuntu/Debian Linux достаточно установить пакет make.
+
+Импортировать проект в Eclipse так:
+
+    File > New > Makefile Project With Existing Code
