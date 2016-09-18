@@ -275,6 +275,9 @@ STM32CubeMX умеет генерировать проекты для неско
 Чтобы скомпилировать проект и работать с ним в Eclipse через обычные Make-файлы необходимо сгенерировать проект для IDE SW4STM32 с помощью STM32CubeMX, а затем сгенерировать make-файл с помощью скрипта https://github.com/baoshi/CubeMX2Makefile. Для этого понадобится Python 2.7 и команда:
 
     CubeMX2Makefile.py путь_к_проекту_SW4STM32
+    
+    usage: cubemximporter.py [-h] [-v VERBOSE] [--dryrun]
+                         eclipse_project_folder cubemx_project_folder
 
 Потом открыть сгенерированный файл и удалить кавычки в строчке с CDEFS. Например,
 
